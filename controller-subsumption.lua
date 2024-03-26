@@ -14,7 +14,7 @@ end
 
 -- NOTE: I can add the state as a parameter of this function and pass it to the callbacks
 local function execute_steps()
-	for _, level in ipairs(levels_stack.tree) do
+	for _, level in ipairs(levels_stack.list) do
 		local level_number = level.level
 		local callback = level.callback
 		logger.log("executing level " .. level_number)

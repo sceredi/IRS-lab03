@@ -1,7 +1,7 @@
 local M = {}
 local levels = require("src.levels")
 
-M.tree = {
+M.list = {
 	{
 		level = 0,
 		callback = levels.collisions_avoidance,
