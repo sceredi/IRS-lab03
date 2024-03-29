@@ -3,7 +3,7 @@ local logger = require("src.wrapper.logger")
 local globals = require("src.globals")
 local M = {}
 
-function M.collisions_avoidance()
+local function get_closes_proximity_sensor()
 	local nearest = {
 		pos = 1,
 		value = robot_wrapper.get_proximity_sensor_readings()[1].value,
@@ -16,6 +16,11 @@ function M.collisions_avoidance()
 			}
 		end
 	end
+	return nearest
+end
+
+function M.collisions_avoidance()
+	local nearest = get_closes_proximity_sensor()
 	local left_v, right_v = nil, nil
 	if nearest.value >= globals.PROXIMITY_THRESHOLD then
 		local rotation_speed = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY / 2)
@@ -62,7 +67,7 @@ local function calculateWheelSpeed(brightest)
 	return left_v, right_v
 end
 
-function M.go_towards_light()
+local function get_brightest_light()
 	local brightest_light = {
 		pos = 1,
 		value = robot_wrapper.get_light_sensor_readings()[1].value,
@@ -75,6 +80,11 @@ function M.go_towards_light()
 			}
 		end
 	end
+	return brightest_light
+end
+
+function M.go_towards_light()
+	local brightest_light = get_brightest_light()
 	local left_v, right_v = nil, nil
 	if brightest_light.value >= globals.LIGHT_THRESHOLD then
 		left_v, right_v = calculateWheelSpeed(brightest_light)
@@ -83,18 +93,7 @@ function M.go_towards_light()
 end
 
 function M.stay_still()
-	local brightest_light = {
-		pos = 1,
-		value = robot_wrapper.get_light_sensor_readings()[1].value,
-	}
-	for i = 2, #robot_wrapper.get_light_sensor_readings() do
-		if robot_wrapper.get_light_sensor_readings()[i].value > brightest_light.value then
-			brightest_light = {
-				pos = i,
-				value = robot_wrapper.get_light_sensor_readings()[i].value,
-			}
-		end
-	end
+	local brightest_light = get_brightest_light()
 	local left_v, right_v = nil, nil
 	if brightest_light.value >= globals.ARRIVAL_THRESHOLD then
 		robot_wrapper.leds.set_all_colors("yellow")
