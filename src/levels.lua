@@ -16,32 +16,32 @@ function M.collisions_avoidance()
 			}
 		end
 	end
+	local left_v, right_v = nil, nil
 	if nearest.value >= globals.PROXIMITY_THRESHOLD then
 		local rotation_speed = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY / 2)
 		if nearest.pos <= 7 then
-			robot_wrapper.wheels.set_velocity(rotation_speed, -rotation_speed)
+			left_v = rotation_speed
+			right_v = -rotation_speed
+			-- robot_wrapper.wheels.set_velocity(rotation_speed, -rotation_speed)
 		elseif nearest.pos >= 18 then
-			robot_wrapper.wheels.set_velocity(-rotation_speed, rotation_speed)
-		else
-			return false
+			left_v = -rotation_speed
+			right_v = rotation_speed
+			-- robot_wrapper.wheels.set_velocity(-rotation_speed, rotation_speed)
 		end
 		robot_wrapper.leds.set_all_colors("red")
-		return true
-	else
-		return false
 	end
+	return left_v, right_v
 end
 
 function M.random_walk()
 	robot_wrapper.leds.set_all_colors("green")
 	local left_v = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY)
 	local right_v = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY)
-	robot_wrapper.wheels.set_velocity(left_v, right_v)
-	return false
+	return left_v, right_v
 end
 
 local function calculateWheelSpeed(brightest)
-	local left_v, right_v
+	local left_v, right_v = nil, nil
 	if brightest.pos == 1 or brightest.pos == 24 then
 		left_v = globals.MAX_VELOCITY
 		right_v = globals.MAX_VELOCITY
@@ -75,12 +75,11 @@ function M.go_towards_light()
 			}
 		end
 	end
-	logger.log("Brightest light: " .. brightest_light.value)
+	local left_v, right_v = nil, nil
 	if brightest_light.value >= globals.LIGHT_THRESHOLD then
-		local left_v, right_v = calculateWheelSpeed(brightest_light)
-		robot_wrapper.wheels.set_velocity(left_v, right_v)
+		left_v, right_v = calculateWheelSpeed(brightest_light)
 	end
-	return false
+	return left_v, right_v
 end
 
 function M.stay_still()
@@ -96,11 +95,12 @@ function M.stay_still()
 			}
 		end
 	end
-	if brightest_light.value >= globals.LIGHT_THRESHOLD then
+	local left_v, right_v = nil, nil
+	if brightest_light.value >= globals.ARRIVAL_THRESHOLD then
 		robot_wrapper.leds.set_all_colors("yellow")
-		robot_wrapper.wheels.set_velocity(0, 0)
-		return true
+		left_v, right_v = 0, 0
 	end
-	return false
+	return left_v, right_v
 end
+
 return M

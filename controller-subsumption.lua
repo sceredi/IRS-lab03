@@ -14,15 +14,20 @@ end
 
 -- NOTE: I can add the state as a parameter of this function and pass it to the callbacks
 local function execute_steps()
+	local left_v, right_v = nil, nil
 	for _, level in ipairs(levels_stack.list) do
 		local level_number = level.level
 		local callback = level.callback
 		logger.log("executing level " .. level_number)
-		if callback() then
-			return true -- Behavior successfully executed
+		local left_ret, right_ret = callback()
+		if left_ret ~= nil and right_ret ~= nil then
+			left_v = left_ret
+			right_v = right_ret
 		end
 	end
-	return false -- No behavior executed
+	if left_v ~= nil and right_v ~= nil then
+		robot_wrapper.wheels.set_velocity(left_v, right_v)
+	end
 end
 --[[ This function is executed at each time step
      It must contain the logic of your controller ]]
