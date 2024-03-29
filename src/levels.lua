@@ -19,19 +19,43 @@ local function get_closes_proximity_sensor()
 	return nearest
 end
 
+local function get_avg_tl_tr_proximity()
+	local tl, tr = 0, 0
+	for i = 1, 7 do
+		tl = tl + robot_wrapper.get_proximity_sensor_readings()[i].value
+	end
+	for i = 18, 24 do
+		tr = tr + robot_wrapper.get_proximity_sensor_readings()[i].value
+	end
+	return tl / 7, tr / 7
+end
+
 function M.collisions_avoidance()
 	local nearest = get_closes_proximity_sensor()
 	local left_v, right_v = nil, nil
 	if nearest.value >= globals.PROXIMITY_THRESHOLD then
 		local rotation_speed = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY / 2)
+		local tl, tr = get_avg_tl_tr_proximity()
 		if nearest.pos <= 7 then
 			left_v = rotation_speed
 			right_v = -rotation_speed
-			-- robot_wrapper.wheels.set_velocity(rotation_speed, -rotation_speed)
+			if
+				tl - tr <= globals.PROXIMITY_THRESHOLD_FUNNEL_MIN_DIFF
+				and tl + tr >= globals.PROXIMITY_THRESHOLD_FUNNEL_MAX_SUM
+			then
+				left_v = -rotation_speed
+				right_v = rotation_speed
+			end
 		elseif nearest.pos >= 18 then
 			left_v = -rotation_speed
 			right_v = rotation_speed
-			-- robot_wrapper.wheels.set_velocity(-rotation_speed, rotation_speed)
+			if
+				tl - tr <= globals.PROXIMITY_THRESHOLD_FUNNEL_MIN_DIFF
+				and tl + tr >= globals.PROXIMITY_THRESHOLD_FUNNEL_MAX_SUM
+			then
+				left_v = -rotation_speed
+				right_v = rotation_speed
+			end
 		end
 		robot_wrapper.leds.set_all_colors("red")
 	end
