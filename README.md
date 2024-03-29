@@ -13,15 +13,19 @@ Subsumption Architecture.
 M.list = {
     {
         level = 0,
-        callback = levels.collisions_avoidance,
-    },
-    {
-        level = 1,
         callback = levels.random_walk,
     },
     {
-        level = 2,
+        level = 1,
         callback = levels.go_towards_light,
+    },
+    {
+        level = 2,
+        callback = levels.collisions_avoidance,
+    },
+    {
+        level = 3,
+        callback = levels.stay_still,
     },
 }
 ```
@@ -29,11 +33,9 @@ M.list = {
 This code snippet shows the implementation of the "list" of levels defined in the architecture:
 - `level` is simply used for pretty logging of the current level being executed.
 - `callback` is a reference to a function that, when executed, will use the readings from the various sensors and 
-execute some actions on the actuators. The callback functions will also return a boolean value: `true` if the 
-executed action is the last one that needs to be executed, `false` if the following layers should also execute 
-their callback and override the values set by the current one. For example, if an obstacle is very close to the 
-robot, the collision avoidance callback will execute and return `true` so that the robot will avoid the obstacle 
-and deny the execution of the following layers.
+execute some actions on the actuators. The callback function will return the values to change in the actuators. 
+In this case only the left and right wheel speed values. Every layer above the current one is able to ovverride
+those values with the one it returns, making the level number the same as the importance of the level.
 
 ## Edits from the Second Activity Implementation
 Few changes were implemented from the previous architecture to this one. Some edits were needed due to the 
