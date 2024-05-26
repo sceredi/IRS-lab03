@@ -5,20 +5,17 @@ local levels_stack = require("src.levels-stack")
 
 local n_steps = 0
 
---[[ This function is executed every time you press the 'execute'
-     button ]]
 function init()
 	n_steps = 0
 	robot_wrapper.wheels.set_velocity(0, 0)
 end
 
--- NOTE: I can add the state as a parameter of this function and pass it to the callbacks
+-- execute_steps will execute all levels in the stack and set the velocity of the robot
 local function execute_steps()
 	local left_v, right_v = nil, nil
-	for _, level in ipairs(levels_stack.list) do
-		local level_number = level.level
+	for i, level in ipairs(levels_stack.list) do
 		local callback = level.callback
-		logger.log("executing level " .. level_number)
+		logger.log("executing level " .. i)
 		local left_ret, right_ret = callback()
 		if left_ret ~= nil and right_ret ~= nil then
 			left_v = left_ret
@@ -29,25 +26,22 @@ local function execute_steps()
 		robot_wrapper.wheels.set_velocity(left_v, right_v)
 	end
 end
---[[ This function is executed at each time step
-     It must contain the logic of your controller ]]
+
 function step()
 	n_steps = n_steps + 1
 	execute_steps()
 end
 
---[[ This function is executed every time you press the 'reset'
-     button in the GUI. It is supposed to restore the state
-     of the controller to whatever it was right after init() was
-     called. The state of sensors and actuators is reset
-     automatically by ARGoS. ]]
 function reset()
 	n_steps = 0
 	robot_wrapper.wheels.set_velocity(0, 0)
 end
 
---[[ This function is executed only once, when the robot is removed
-     from the simulation ]]
+-- destroy is called when the controller is destroyed
 function destroy()
-	-- put your code here
+	local x = robot.positioning.position.x
+	local y = robot.positioning.position.y
+	local d = math.sqrt((x - 2) ^ 2 + y ^ 2)
+	-- return the distance to the target
+	print("f_distance " .. d)
 end

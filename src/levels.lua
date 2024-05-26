@@ -1,9 +1,9 @@
 local robot_wrapper = require("src.wrapper.robot_wrapper")
-local logger = require("src.wrapper.logger")
 local globals = require("src.globals")
 local M = {}
 
-local function get_closes_proximity_sensor()
+-- get the closest proximity sensor to the robot
+local function get_closest_proximity_sensor()
 	local nearest = {
 		pos = 1,
 		value = robot_wrapper.get_proximity_sensor_readings()[1].value,
@@ -19,6 +19,7 @@ local function get_closes_proximity_sensor()
 	return nearest
 end
 
+-- get the average value of the top-left and top-right proximity sensors
 local function get_avg_tl_tr_proximity()
 	local tl, tr = 0, 0
 	for i = 1, 7 do
@@ -30,38 +31,32 @@ local function get_avg_tl_tr_proximity()
 	return tl / 7, tr / 7
 end
 
+-- avoid collisions with obstacles
 function M.collisions_avoidance()
-	local nearest = get_closes_proximity_sensor()
+	local nearest = get_closest_proximity_sensor()
 	local left_v, right_v = nil, nil
 	if nearest.value >= globals.PROXIMITY_THRESHOLD then
 		local rotation_speed = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY / 2)
 		local tl, tr = get_avg_tl_tr_proximity()
-		if nearest.pos <= 7 then
+		if
+			tl - tr <= math.abs(globals.PROXIMITY_THRESHOLD_FUNNEL_MAX_DIFF)
+			and tl + tr >= globals.PROXIMITY_THRESHOLD_FUNNEL_MIN_SUM
+		then
+			left_v = -rotation_speed
+			right_v = rotation_speed
+		elseif nearest.pos <= 7 then
 			left_v = rotation_speed
 			right_v = -rotation_speed
-			if
-				tl - tr <= globals.PROXIMITY_THRESHOLD_FUNNEL_MIN_DIFF
-				and tl + tr >= globals.PROXIMITY_THRESHOLD_FUNNEL_MAX_SUM
-			then
-				left_v = -rotation_speed
-				right_v = rotation_speed
-			end
 		elseif nearest.pos >= 18 then
 			left_v = -rotation_speed
 			right_v = rotation_speed
-			if
-				tl - tr <= globals.PROXIMITY_THRESHOLD_FUNNEL_MIN_DIFF
-				and tl + tr >= globals.PROXIMITY_THRESHOLD_FUNNEL_MAX_SUM
-			then
-				left_v = -rotation_speed
-				right_v = rotation_speed
-			end
 		end
 		robot_wrapper.leds.set_all_colors("red")
 	end
 	return left_v, right_v
 end
 
+-- move randomly
 function M.random_walk()
 	robot_wrapper.leds.set_all_colors("green")
 	local left_v = robot_wrapper.random.uniform(0, globals.MAX_VELOCITY)
@@ -69,6 +64,7 @@ function M.random_walk()
 	return left_v, right_v
 end
 
+-- calculate the wheel speed based on the brightest light, to move towards it
 local function calculateWheelSpeed(brightest)
 	local left_v, right_v = nil, nil
 	if brightest.pos == 1 or brightest.pos == 24 then
@@ -91,6 +87,7 @@ local function calculateWheelSpeed(brightest)
 	return left_v, right_v
 end
 
+-- get the brightest light sensor
 local function get_brightest_light()
 	local brightest_light = {
 		pos = 1,
@@ -107,6 +104,7 @@ local function get_brightest_light()
 	return brightest_light
 end
 
+-- move towards the brightest light
 function M.go_towards_light()
 	local brightest_light = get_brightest_light()
 	local left_v, right_v = nil, nil
@@ -116,6 +114,7 @@ function M.go_towards_light()
 	return left_v, right_v
 end
 
+-- stay still if the brightest light is above the arrival threshold
 function M.stay_still()
 	local brightest_light = get_brightest_light()
 	local left_v, right_v = nil, nil
